@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Assistant Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .chat-box {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-log {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .section-title {
+      font-weight: bold;
+      font-size: 20px;
+      color: #1a3c6e;
+      margin: 20px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #007bff;
+    }
+
+    .section-content {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 20px;
+      padding-left: 10px;
+      line-height: 1.8;
+    }
+
+    .loading-message {
+      color: #555;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chat-box">
+    <h2>Travel Assistant Chat</h2>
+    <div class="input-group">
+      <input type="text" id="userInput" placeholder="Ask me about your trip...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    <div class="chat-log" id="chatLog"></div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      const log = document.getElementById('chatLog');
+      log.innerHTML = '<div class="loading-message">Analyzing best decision for you...</div>';
+      input.value = ''; // Clear input after sending
+
+      try {
+        const response = await fetch('/api/travel-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+        if (data.reply) {
+          renderReply(data.reply);
+        } else {
+          log.innerHTML = '<div class="section-content">No valid reply received.</div>';
+        }
+      } catch (error) {
+        log.innerHTML = '<div class="section-content">Error: ' + error.message + '</div>';
+      }
+    }
+
+    function renderReply(reply) {
+      const chatLog = document.getElementById('chatLog');
+      chatLog.innerHTML = '';
+
+      // Expected section titles as defined in SYSTEM_PROMPT
+      const expectedSections = [
+        'Transportation Options',
+        'Departure Points',
+        'Travel Duration',
+        'Hotel Recommendations',
+        'Budget Overview',
+        'Packing Suggestions',
+        'Cautions & Tips'
+      ];
+
+      // Split reply by double newlines and process each section
+      const sections = reply.split('\n\n').map(section => section.trim()).filter(section => section);
+      let currentSectionIndex = 0;
+
+      sections.forEach((section, index) => {
+        let titleText = '';
+        let contentText = section;
+
+        // Check if section starts with an expected section title
+        const firstLine = section.split('\n')[0].trim();
+        if (expectedSections.includes(firstLine)) {
+          titleText = firstLine;
+          contentText = section.split('\n').slice(1).join('\n').trim();
+          currentSectionIndex = expectedSections.indexOf(titleText) + 1;
+        } else {
+          // If no recognized title, assign the next expected title
+          if (currentSectionIndex < expectedSections.length) {
+            titleText = expectedSections[currentSectionIndex];
+            contentText = section;
+            currentSectionIndex++;
+          } else {
+            // Fallback for unexpected content
+            titleText = 'Additional Information';
+          }
+        }
+
+        if (contentText) {
+          // Add line breaks for numbered lists (e.g. "1. item 2. item" -> newlines)
+          contentText = contentText.replace(/\s+(\d+\.\s)/g, '\n$1');
+
+          const title = document.createElement('div');
+          title.className = 'section-title';
+          title.textContent = titleText;
+          chatLog.appendChild(title);
+
+          const content = document.createElement('div');
+          content.className = 'section-content';
+          content.innerText = contentText;
+          chatLog.appendChild(content);
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
