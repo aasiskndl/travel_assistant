@@ -53,20 +53,19 @@ Follow these steps to get the Travel Assistant API running on your local machine
 2. **Install Dependencies**
 
   ```bash
-  npm install express dotenv @google/generative-ai
+npm install express dotenv @google/generative-ai
 ```
 3. **Configure Environment Variables**
   ```bash
-  GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-  PORT=4000
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+PORT=4000
 ```
 4. **Run the Application**
    ```bash
-   node your_main_server_file.js  # e.g., node index.js or node app.js
+   node your_main_server_file.js  
 
-
-###🤝 Contributing
+## 🤝 Contributing
 Feel free to open an issue or submit a pull request if you have suggestions or improvements.
 
-###📄 License
+## 📄 License
 This project is open-source and available under the MIT License.
